@@ -3,6 +3,7 @@ package frontmatter
 import (
 	"errors"
 	"regexp"
+	"sort"
 	"strings"
 	"sync"
 )
@@ -69,7 +70,14 @@ func Generate(doc *Document) (string, error) {
 	var builder strings.Builder
 	builder.WriteString("---\n")
 
-	for k, v := range doc.Metadata {
+	// Ensure deterministic order by sorting keys
+	keys := make([]string, 0, len(doc.Metadata))
+	for k := range doc.Metadata {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	for _, k := range keys {
+		v := doc.Metadata[k]
 		builder.WriteString(k)
 		builder.WriteString(": ")
 		builder.WriteString(v)
@@ -121,10 +129,16 @@ func parseMetadata(block string) map[string]string {
 
 	lines := strings.Split(block, "\n")
 	for _, line := range lines {
+		line = strings.TrimSpace(line)
+		if line == "" {
+			continue
+		}
 		parts := strings.SplitN(line, ":", 2)
 		if len(parts) == 2 {
 			key := strings.TrimSpace(parts[0])
 			value := strings.TrimSpace(parts[1])
+			// Normalize potential Windows line endings
+			value = strings.TrimRight(value, "\r")
 			meta[key] = value
 		}
 	}
