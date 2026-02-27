@@ -1,3 +1,3 @@
 module github.com/njchilds90/go-frontmatter
 
-go 1.22
+go 1.21
